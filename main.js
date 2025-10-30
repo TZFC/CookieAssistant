@@ -512,27 +512,28 @@ CookieAssistant.launch = function()
 						var grimoire = Game.ObjectsById[7].minigame;
 						var spell = grimoire.spells['hand of fate'];
 						var cost = 0;
-						switch(CookieAssistant.config.particular.spell.mode)
-						{
-							case 0: //必要最低限のMP
-								cost = Math.floor(spell.costMin + grimoire.magicM * spell.costPercent);
-								break;
-							case 1: //MP完全回復
-							default:
-								cost = grimoire.magicM;
-								break;
-						}
-						if (cost <= Math.floor(grimoire.magic) && buffCount >= CookieAssistant.modes.spell_buff[CookieAssistant.config.particular.spell.mode2].count)
-						{
-							grimoire.castSpell(spell);
-							CookieAssistant.isAfterSpellcast = true;
-							setTimeout(() =>
-							{
-								if (CookieAssistant.isAfterSpellcast)
-								{
-									CookieAssistant.isAfterSpellcast = false;
-								}
-							}, 3000);
+						// Calculate both costs once
+						const costMin = Math.floor(spell.costMin + grimoire.magicM * spell.costPercent);
+						const costMax = grimoire.magicM;
+						
+						// Conditions
+						const satisfyMinMP = costMin <= grimoire.magic;
+						const reachMaxMP   = costMax <= grimoire.magic;
+						
+						// Buff conditions
+						const hasAtLeast1Buff = buffCount >= 1;
+						const hasAtLeast2Buff = buffCount >= 2;
+						
+						// Trigger if:
+						// (minimum MP & ≥2 buffs) OR (max MP & ≥1 buff)
+						if ((satisfyMinMP && hasAtLeast2Buff) || (reachMaxMP && hasAtLeast1Buff)) {
+						    grimoire.castSpell(spell);
+						    CookieAssistant.isAfterSpellcast = true;
+						    setTimeout(() => {
+						        if (CookieAssistant.isAfterSpellcast) {
+						            CookieAssistant.isAfterSpellcast = false;
+						        }
+						    }, 3000);
 						}
 					},
 					CookieAssistant.config.intervals.autoSpellonBuff
